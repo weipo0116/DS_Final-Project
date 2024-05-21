@@ -50,13 +50,14 @@ str(train_df)
 
 --------------------------------------------------------------------
 ## EDA
-install.packages("ggplot2")
-install.packages("ggpubr")
-install.packages("patchwork")
+# install.packages("ggplot2")
+# install.packages("ggpubr")
+# install.packages("patchwork")
+# install.packages("scales")
 library(ggpubr)
 library(patchwork)
 library(ggplot2)
-
+library(scales)
 
 eda_plot <- function(data) {
   ## Transaction.Amount
@@ -100,15 +101,57 @@ eda_plot <- function(data) {
     scale_y_continuous(labels = comma) +
     guides(fill = FALSE)
   
+  category_count <- data %>%
+    count(`Product.Category`) %>%
+    arrange(desc(n))
+  
+  ## Product.Category
+  category_count <- data %>%
+    count(`Product.Category`) %>%
+    arrange(desc(n))
+  
+  # Plot pie chart
+  category_pie_chart <- ggplot(category_count, aes(x = "", y = n, fill = `Product.Category`)) +
+    geom_bar(stat = "identity", width = 1) +
+    coord_polar("y", start = 0) +
+    theme_void() +
+    theme(plot.title = element_text(hjust = 0.5),  # 置中
+          legend.position = "right") +
+    geom_text(aes(label = sprintf("%.1f%%", n/sum(n) * 100)), position = position_stack(vjust = 0.5)) +
+    geom_text(aes(x = 2.0, label = `Product.Category`), position = position_stack(vjust = 0.5)) +
+    scale_fill_brewer(palette = "Pastel1") +
+    labs(title = "Product Category", fill = "Product.Category")
+  
+  # Plot bar chart
+  category_bar_chart <- ggplot(data, aes(x = factor(`Product.Category`), fill = factor(`Product.Category`))) +
+    geom_bar() +
+    geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5),  # 置中
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+          axis.title.x = element_blank(),
+          # axis.text.x = element_text(angle = 45, hjust = 1)
+    ) + 
+    scale_fill_brewer(palette = "Pastel1") +
+    scale_y_continuous(n.breaks = 8, labels = comma) +
+    ggtitle("Product Category") +
+    guides(fill = FALSE)
+  
   return(list(transaction_chart = transaction_chart, 
               payment_pie_chart = payment_pie_chart, 
-              payment_bar_chart = payment_bar_chart))
+              payment_bar_chart = payment_bar_chart,
+              category_pie_chart = category_pie_chart, 
+              category_bar_chart = category_bar_chart))
 }
 
 plots <- eda_plot(train_df)
 
-print(plots$transaction_chart)
+# print(plots$transaction_chart)
 
 ggsave("transaction_chart.png", plot = plots$transaction_chart, width = 8, height = 6)
 ggsave("payment_pie_chart.png", plot = plots$payment_pie_chart, width = 8, height = 6)
 ggsave("payment_bar_chart.png", plot = plots$payment_bar_chart, width = 8, height = 6)
+ggsave("category_pie_chart.png", plot = plots$category_pie_chart, width = 8, height = 6)
+ggsave("category_bar_chart.png", plot = plots$category_bar_chart, width = 8, height = 6)
+
+# data <- train_df
