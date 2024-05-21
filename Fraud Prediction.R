@@ -59,7 +59,7 @@ library(patchwork)
 library(ggplot2)
 library(scales)
 
-# 創建圓餅圖
+# 創建圓餅圖Function
 create_pie_chart <- function(data, column_name) {
   # 計算每個類別數量
   category_count <- data %>%
@@ -81,7 +81,7 @@ create_pie_chart <- function(data, column_name) {
   return(pie_chart)
 }
 
-# 創建長條圖
+# 創建長條圖Function
 create_bar_chart <- function(data, column_name) {
   bar_chart <- ggplot(data, aes(x = factor(!!sym(column_name)), fill = factor(!!sym(column_name)))) +
     geom_bar() +
@@ -126,28 +126,36 @@ eda_plot <- function(data) {
   quantity_pie_chart <- create_pie_chart(data, "Quantity")
   quantity_bar_chart <- create_bar_chart(data, "Quantity")
   
-  
-  return(list(transaction_chart = transaction_chart, 
-              payment_pie_chart = payment_pie_chart, 
-              payment_bar_chart = payment_bar_chart,
-              category_pie_chart = category_pie_chart, 
-              category_bar_chart = category_bar_chart,
-              quantity_pie_chart = quantity_pie_chart,
-              quantity_bar_chart = quantity_bar_chart
-              ))
+  # 收集所有圖像並返回
+  charts <- mget(ls(pattern = "_chart$"))
+  return(charts)
 }
 
-plots <- eda_plot(train_df)
+charts <- eda_plot(data)
 
-# print(plots$transaction_chart)
+# print(charts$quantity_bar_chart)
 
-ggsave("transaction_chart.png", plot = plots$transaction_chart, width = 8, height = 6)
-ggsave("payment_pie_chart.png", plot = plots$payment_pie_chart, width = 8, height = 6)
-ggsave("payment_bar_chart.png", plot = plots$payment_bar_chart, width = 8, height = 6)
-ggsave("category_pie_chart.png", plot = plots$category_pie_chart, width = 8, height = 6)
-ggsave("category_bar_chart.png", plot = plots$category_bar_chart, width = 8, height = 6)
-ggsave("quantity_pie_chart.png", plot = plots$quantity_pie_chart, width = 8, height = 6)
-ggsave("quantity_bar_chart.png", plot = plots$quantity_bar_chart, width = 8, height = 6)
+# 保存圖像Function
+save_plots <- function(charts, width = 8, height = 6, path = getwd()) {
+  plot_names <- names(plots)
+  for (plot_name in plot_names) {
+    ggsave(filename = file.path(path, paste0(plot_name, ".png")), 
+           plot = plots[[plot_name]], 
+           width = width, 
+           height = height)
+  }
+}
+
+# 保存圖像到本地端
+save_plots(charts)
+
+# ggsave("transaction_chart.png", plot = plots$transaction_chart, width = 8, height = 6)
+# ggsave("payment_pie_chart.png", plot = plots$payment_pie_chart, width = 8, height = 6)
+# ggsave("payment_bar_chart.png", plot = plots$payment_bar_chart, width = 8, height = 6)
+# ggsave("category_pie_chart.png", plot = plots$category_pie_chart, width = 8, height = 6)
+# ggsave("category_bar_chart.png", plot = plots$category_bar_chart, width = 8, height = 6)
+# ggsave("quantity_pie_chart.png", plot = plots$quantity_pie_chart, width = 8, height = 6)
+# ggsave("quantity_bar_chart.png", plot = plots$quantity_bar_chart, width = 8, height = 6)
 
 # data <- train_df
 
