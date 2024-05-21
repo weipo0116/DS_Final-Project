@@ -59,6 +59,48 @@ library(patchwork)
 library(ggplot2)
 library(scales)
 
+# 創建圓餅圖
+create_pie_chart <- function(data, column_name) {
+  # 計算每個類別數量
+  category_count <- data %>%
+    count(!!sym(column_name)) %>%
+    arrange(desc(n))
+  
+  pie_chart <- ggplot(category_count, aes(x = "", y = n, fill = factor(!!sym(column_name)))) +
+    geom_bar(stat = "identity", width = 1) +
+    coord_polar("y", start = 0) +
+    theme_void() +
+    theme(plot.title = element_text(hjust = 0.5),  # 置中
+          legend.position = "right") +
+    geom_text(aes(label = sprintf("%.1f%%", n/sum(n) * 100)), position = position_stack(vjust = 0.5)) +
+    geom_text(aes(x = 2.0, label = !!sym(column_name)), position = position_stack(vjust = 0.5)) +
+    scale_fill_brewer(palette = "Pastel1") +
+    labs(title = column_name, fill = column_name)+
+    guides(fill = FALSE)
+  
+  return(pie_chart)
+}
+
+# 創建長條圖
+create_bar_chart <- function(data, column_name) {
+  bar_chart <- ggplot(data, aes(x = factor(!!sym(column_name)), fill = factor(!!sym(column_name)))) +
+    geom_bar() +
+    geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5),  # 置中
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+          axis.title.x = element_blank()
+          # 如果需要旋转 x 轴文本，可以取消下一行的注释
+          # axis.text.x = element_text(angle = 45, hjust = 1)
+    ) + 
+    scale_fill_brewer(palette = "Pastel1") +
+    scale_y_continuous(n.breaks = 8, labels = scales::comma) +
+    ggtitle(column_name) +
+    guides(fill = FALSE)
+  
+  return(bar_chart)
+}
+
 eda_plot <- function(data) {
   ## Transaction.Amount
   transaction_chart <- ggplot(data, aes(x = Transaction.Amount)) +
@@ -71,77 +113,28 @@ eda_plot <- function(data) {
     scale_x_continuous(n.breaks = 6) +
     scale_y_continuous(n.breaks = 8, labels = comma)
   
+  print(transaction_chart)
   ## Payment.Method
-  payment_count <- data %>%
-    count(`Payment.Method`) %>%
-    arrange(desc(n))
-  
-  # Plot pie chart
-  payment_pie_chart <- ggplot(payment_count, aes(x = "", y = n, fill = `Payment.Method`)) +
-    geom_bar(stat = "identity", width = 1) +
-    coord_polar("y", start = 0) +
-    theme_void() +
-    theme(plot.title = element_text(hjust = 0.5),  # 置中
-          legend.position = "right") +
-    geom_text(aes(label = sprintf("%.1f%%", n/sum(n) * 100)), position = position_stack(vjust = 0.5)) +
-    geom_text(aes(x = 1.9, label = `Payment.Method`), position = position_stack(vjust = 0.5)) +
-    scale_fill_brewer(palette = "Pastel1") +
-    labs(title = "Payment Method", fill = "Payment.Method")
-  
-  # Plot bar chart
-  payment_bar_chart <- ggplot(data, aes(x = factor(`Payment.Method`), fill = factor(`Payment.Method`))) +
-    geom_bar() +
-    geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
-    theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5),  # 置中
-          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
-          axis.title.x = element_blank()) + 
-    scale_fill_brewer(palette = "Pastel1") +
-    ggtitle("Payment Method") +
-    scale_y_continuous(labels = comma) +
-    guides(fill = FALSE)
-  
-  category_count <- data %>%
-    count(`Product.Category`) %>%
-    arrange(desc(n))
+  payment_pie_chart <- create_pie_chart(data, "Payment.Method")
+  payment_bar_chart <- create_bar_chart(data, "Payment.Method")
   
   ## Product.Category
-  category_count <- data %>%
-    count(`Product.Category`) %>%
-    arrange(desc(n))
+  category_pie_chart <- create_pie_chart(data, "Product.Category")
+  category_bar_chart <- create_bar_chart(data, "Product.Category")
   
-  # Plot pie chart
-  category_pie_chart <- ggplot(category_count, aes(x = "", y = n, fill = `Product.Category`)) +
-    geom_bar(stat = "identity", width = 1) +
-    coord_polar("y", start = 0) +
-    theme_void() +
-    theme(plot.title = element_text(hjust = 0.5),  # 置中
-          legend.position = "right") +
-    geom_text(aes(label = sprintf("%.1f%%", n/sum(n) * 100)), position = position_stack(vjust = 0.5)) +
-    geom_text(aes(x = 2.0, label = `Product.Category`), position = position_stack(vjust = 0.5)) +
-    scale_fill_brewer(palette = "Pastel1") +
-    labs(title = "Product Category", fill = "Product.Category")
+  ## Quantity
+  quantity_pie_chart <- create_pie_chart(data, "Quantity")
+  quantity_bar_chart <- create_bar_chart(data, "Quantity")
   
-  # Plot bar chart
-  category_bar_chart <- ggplot(data, aes(x = factor(`Product.Category`), fill = factor(`Product.Category`))) +
-    geom_bar() +
-    geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
-    theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5),  # 置中
-          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
-          axis.title.x = element_blank(),
-          # axis.text.x = element_text(angle = 45, hjust = 1)
-    ) + 
-    scale_fill_brewer(palette = "Pastel1") +
-    scale_y_continuous(n.breaks = 8, labels = comma) +
-    ggtitle("Product Category") +
-    guides(fill = FALSE)
   
   return(list(transaction_chart = transaction_chart, 
               payment_pie_chart = payment_pie_chart, 
               payment_bar_chart = payment_bar_chart,
               category_pie_chart = category_pie_chart, 
-              category_bar_chart = category_bar_chart))
+              category_bar_chart = category_bar_chart,
+              quantity_pie_chart = quantity_pie_chart,
+              quantity_bar_chart = quantity_bar_chart
+              ))
 }
 
 plots <- eda_plot(train_df)
@@ -153,5 +146,9 @@ ggsave("payment_pie_chart.png", plot = plots$payment_pie_chart, width = 8, heigh
 ggsave("payment_bar_chart.png", plot = plots$payment_bar_chart, width = 8, height = 6)
 ggsave("category_pie_chart.png", plot = plots$category_pie_chart, width = 8, height = 6)
 ggsave("category_bar_chart.png", plot = plots$category_bar_chart, width = 8, height = 6)
+ggsave("quantity_pie_chart.png", plot = plots$quantity_pie_chart, width = 8, height = 6)
+ggsave("quantity_bar_chart.png", plot = plots$quantity_bar_chart, width = 8, height = 6)
 
 # data <- train_df
+
+
