@@ -48,7 +48,7 @@ train_df <- clean_data(train_df)
 head(train_df)
 str(train_df)
 
---------------------------------------------------------------------
+###--------------------------------------------------------------------
 ## EDA
 # install.packages("ggplot2")
 # install.packages("ggpubr")
