@@ -12,7 +12,7 @@
 - [ ] Transaction.DOW
 - [ ] Transaction.Month
 - [ ] Is.Address.Match
-### Join Is.Fraudulent
+### (with Is.Fraudulent)
 - [ ] Payment.Method
 - [ ] Product.Category
 - [ ] Quantity
