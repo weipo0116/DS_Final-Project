@@ -44,9 +44,9 @@ clean_data <- function(df) {
   return(df)
 }
 
-train_df <- clean_data(train_df)
-head(train_df)
-str(train_df)
+data <- clean_data(test_df)
+head(data)
+str(data)
 
 ###--------------------------------------------------------------------
 ## EDA
@@ -93,12 +93,29 @@ create_bar_chart <- function(data, column_name) {
           # 如果需要旋转 x 轴文本，可以取消下一行的注释
           # axis.text.x = element_text(angle = 45, hjust = 1)
     ) + 
-    scale_fill_brewer(palette = "Pastel1") +
+    scale_fill_brewer(palette = "Pastel1") + #顏色統一
     scale_y_continuous(n.breaks = 8, labels = scales::comma) +
     ggtitle(column_name) +
     guides(fill = FALSE)
   
   return(bar_chart)
+}
+
+# 建立Hist圖表Function
+create_hist_chart <- function(data, column_name) {
+  # Create the plot
+  plot <- ggplot(data, aes(x = !!sym(column_name), y = ..count..)) +
+    geom_histogram(stat="bin", bins = 150, fill = "orange", alpha = 0.5, aes(y=..count..)) +
+    geom_density(aes(y = ..density.. * length(..count..)*5000/mean(..count..)), color = "orange", alpha = 1, linewidth = 1) +
+    scale_fill_brewer(palette = "Pastel1") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5),  # 置中
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5)) +  # 添加邊匡線
+    ggtitle("Customer.Age")+
+    scale_x_continuous(n.breaks = 8) 
+  
+  # Return the plot
+  return(plot)
 }
 
 eda_plot <- function(data) {
@@ -126,12 +143,22 @@ eda_plot <- function(data) {
   quantity_pie_chart <- create_pie_chart(data, "Quantity")
   quantity_bar_chart <- create_bar_chart(data, "Quantity")
   
+  ## Device Used
+  device_pie_chart <- create_pie_chart(data, "Device.Used")
+  device_bar_chart <- create_bar_chart(data, "Device.Used")
+  
+  ## Account.Age.Days
+  account_hist_chart <- create_hist_chart(data, "Account.Age.Days")
+  
+  ## Customer.Age
+  customer_hist_chart <- create_hist_chart(data, "Customer.Age")
+  
   # 收集所有圖像並返回
   charts <- mget(ls(pattern = "_chart$"))
   return(charts)
 }
 
-charts <- eda_plot(data)
+plots <- eda_plot(data)
 
 # print(charts$quantity_bar_chart)
 
@@ -147,7 +174,7 @@ save_plots <- function(charts, width = 8, height = 6, path = getwd()) {
 }
 
 # 保存圖像到本地端
-save_plots(charts)
+save_plots(plots, path = "./image")
 
 # ggsave("transaction_chart.png", plot = plots$transaction_chart, width = 8, height = 6)
 # ggsave("payment_pie_chart.png", plot = plots$payment_pie_chart, width = 8, height = 6)
