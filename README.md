@@ -8,10 +8,6 @@
 - [ ] Is.Fraudulent
 - [x] Account.Age.Days
 - [ ] Transaction.Hour
-- [ ] Transaction.Day
-- [ ] Transaction.DOW
-- [ ] Transaction.Month
-- [ ] Is.Address.Match
 ### (with Is.Fraudulent)
 - [ ] Payment.Method
 - [ ] Product.Category
