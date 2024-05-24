@@ -1,5 +1,4 @@
 ## EDA
-
 - [x] Transaction.Amount
 - [x] Payment.Method
 - [x] Product.Category
@@ -13,7 +12,7 @@
 - [ ] Transaction.DOW
 - [ ] Transaction.Month
 - [ ] Is.Address.Match
-Join Is.Fraudulent
+### Join Is.Fraudulent
 - [ ] Payment.Method
 - [ ] Product.Category
 - [ ] Quantity
