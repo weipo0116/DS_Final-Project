@@ -9,10 +9,10 @@
 - [x] Account.Age.Days
 - [ ] Transaction.Hour
 ### (with Is.Fraudulent)
-- [ ] Payment.Method
-- [ ] Product.Category
-- [ ] Quantity
-- [ ] Device.Used
-- [ ] Transaction.DOW
-- [ ] Transaction.Month
-- [ ] Is.Address.Match
+- [x] Payment.Method
+- [x] Product.Category
+- [x] Quantity
+- [x] Device.Used
+- [x] Transaction.DOW
+- [x] Transaction.Month
+- [x] Is.Address.Match
