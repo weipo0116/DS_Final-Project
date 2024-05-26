@@ -42,8 +42,12 @@ clean_data <- function(df) {
 train_df <- clean_data(train_df)
 
 is_fraudulent_plots <- function(data, path = "./image/") {
-  data$`Is.Fraudulent` <- as.factor(data$`Is.Fraudulent`)
+  if (!dir.exists(path)) {
+    dir.create(path, recursive = TRUE)
+  }
   
+  data$`Is.Fraudulent` <- as.factor(data$`Is.Fraudulent`)
+
   columns <- c('Payment.Method', 'Product.Category', 
                'Quantity', 'Device.Used', 'Transaction.DOW', 
                'Transaction.Month', 'Is.Address.Match')
@@ -52,15 +56,29 @@ is_fraudulent_plots <- function(data, path = "./image/") {
     p <- ggplot(data, aes_string(x = col, fill = "Is.Fraudulent")) +
       geom_bar(position = "dodge") +
       theme(axis.text.x = element_text(angle = 90, hjust = 1),
-            plot.title = element_text(hjust = 0.5),  # 置中
+            plot.title = element_text(hjust = 0.5),  
             panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
             legend.position = c(0.92, 0.9)) +
-      scale_y_continuous(labels = comma) +  
+      scale_y_continuous(labels = comma) + 
       labs(title = col, fill = "Is.Fraudulent")
     # print(p)
     
-    ggsave(filename = paste0(path, "plot_", col, ".png"), plot = p, width = 10, height = 8)
+    ggsave(filename = paste0(path, "plot_", gsub(" ", "_", col), ".png"), plot = p, width = 10, height = 8)
   }
+  
+  p1 <- ggplot(data, aes(x = `Is.Fraudulent`, y = `Transaction.Amount`)) +
+    geom_boxplot() +
+    theme_minimal() +
+    labs(title = "Transaction Amount by Is Fraudulent", x = "Is Fraudulent", y = "Transaction Amount")
+  
+  p2 <- ggplot(data, aes(x = `Is.Fraudulent`, y = `Transaction.Day`)) +
+    geom_boxplot() +
+    scale_y_continuous(breaks = seq(0, 31, by = 1)) +
+    theme_minimal() +
+    labs(title = "Transaction Day by Is Fraudulent", x = "Is Fraudulent", y = "Transaction Day")
+  
+  combined_plot <- grid.arrange(p1, p2, ncol = 2)
+  ggsave(filename = paste0(path, "boxenplots.png"), plot = combined_plot, width = 16, height = 8)
 }
 
 is_fraudulent_plots(train_df)
