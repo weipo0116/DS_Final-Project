@@ -5,9 +5,9 @@
 - [x] Quantity
 - [x] Customer.Age
 - [x] Device.Used
-- [ ] Is.Fraudulent
+- [x] Is.Fraudulent
 - [x] Account.Age.Days
-- [ ] Transaction.Hour
+- [x] Transaction.Hour
 ### (with Is.Fraudulent)
 - [x] Payment.Method
 - [x] Product.Category
