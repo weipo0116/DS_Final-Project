@@ -1,66 +1,17 @@
-# install.packages("plotly")
-# install.packages("dplyr")
-library(plotly)
-library(dplyr)
-
-
-# 讀取CSV檔
-train_df <- read.csv('archive/Fraudulent_E-Commerce_Transaction_Data.csv')
-test_df <- read.csv('archive/Fraudulent_E-Commerce_Transaction_Data_2.csv')
-
-
-## Data Cleaning
-clean_data <- function(df) {
-  # 將Transaction Date轉為datetime
-  df$Transaction.Date <- as.Date(df$Transaction.Date)
-  
-  # 每個月幾號、星期幾、月份
-  df$Transaction.Day <- as.numeric(format(df$Transaction.Date, "%d"))
-  df$Transaction.DOW <- as.numeric(format(df$Transaction.Date, "%u"))
-  df$Transaction.Month <- as.numeric(format(df$Transaction.Date, "%m"))
-  
-  # 修正Customer Age中的異常值
-  mean_value <- round(mean(df$Customer.Age, na.rm = TRUE), 0)
-  df$Customer.Age <- ifelse(df$Customer.Age <= -9,
-                            abs(df$Customer.Age),
-                            df$Customer.Age)
-  df$Customer.Age <- ifelse(df$Customer.Age < 9,
-                            mean_value,
-                            df$Customer.Age)
-  
-  # Shipping Address與Billing Address的異同（異=0，同=1）
-  df$Is.Address.Match <- as.integer(df$Shipping.Address == df$Billing.Address)
-  
-  # 除去不相關的features
-  df <- df[, !names(df) %in% c("Transaction.ID", "Customer.ID", "Customer.Location",
-                               "IP.Address", "Transaction.Date", "Shipping.Address", "Billing.Address")]
-  
-  # downcast datatype
-  int_col <- sapply(df, is.integer)
-  num_col <- sapply(df, is.numeric) & !int_col
-  df[int_col] <- lapply(df[int_col], as.integer)
-  df[num_col] <- lapply(df[num_col], as.numeric)
-  
-  return(df)
-}
-
-data <- clean_data(train_df)
-head(data)
-str(data)
-
-###--------------------------------------------------------------------
 ## EDA
 # install.packages("ggplot2")
 # install.packages("ggpubr")
 # install.packages("patchwork")
 # install.packages("scales")
 # install.packages("RColorBrewer")
-
 library(RColorBrewer)
 library(ggpubr)
 library(patchwork)
 library(ggplot2)
 library(scales)
+
+train_df <- read.csv('archive/Fraudulent_E-Commerce_Transaction_Data.csv')
+data <- clean_data(train_df)
 
 # 創建圓餅圖Function
 create_pie_chart <- function(data, column_name) {
@@ -208,5 +159,4 @@ save_plots(plots, path = "./image")
 save_plots(plots$transaction_hour_chart, width = 10, height = 6, path = "./image")
 
 # ggsave("transaction_chart.png", plot = plots$transaction_chart, width = 8, height = 6)
-
 
