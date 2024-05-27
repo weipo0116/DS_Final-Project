@@ -4,13 +4,48 @@
 # install.packages("patchwork")
 # install.packages("scales")
 # install.packages("RColorBrewer")
+# install.packages("dplyr")
 library(RColorBrewer)
+library(ggplot2)
 library(ggpubr)
 library(patchwork)
-library(ggplot2)
 library(scales)
+library(dplyr)
 
 train_df <- read.csv('archive/Fraudulent_E-Commerce_Transaction_Data.csv')
+clean_data <- function(df) {
+  # 將Transaction Date轉為datetime
+  df$Transaction.Date <- as.Date(df$Transaction.Date)
+  
+  # 每個月幾號、星期幾、月份
+  df$Transaction.Day <- as.numeric(format(df$Transaction.Date, "%d"))
+  df$Transaction.DOW <- as.numeric(format(df$Transaction.Date, "%u"))
+  df$Transaction.Month <- as.numeric(format(df$Transaction.Date, "%m"))
+  
+  # 修正Customer Age中的異常值
+  mean_value <- round(mean(df$Customer.Age, na.rm = TRUE), 0)
+  df$Customer.Age <- ifelse(df$Customer.Age <= -9,
+                            abs(df$Customer.Age),
+                            df$Customer.Age)
+  df$Customer.Age <- ifelse(df$Customer.Age < 9,
+                            mean_value,
+                            df$Customer.Age)
+  
+  # Shipping Address與Billing Address的異同（異=0，同=1）
+  df$Is.Address.Match <- as.integer(df$Shipping.Address == df$Billing.Address)
+  
+  # 除去不相關的features
+  df <- df[, !names(df) %in% c("Transaction.ID", "Customer.ID", "Customer.Location",
+                               "IP.Address", "Transaction.Date", "Shipping.Address", "Billing.Address")]
+  
+  # downcast datatype
+  int_col <- sapply(df, is.integer)
+  num_col <- sapply(df, is.numeric) & !int_col
+  df[int_col] <- lapply(df[int_col], as.integer)
+  df[num_col] <- lapply(df[num_col], as.numeric)
+  
+  return(df)
+}
 data <- clean_data(train_df)
 
 # 創建圓餅圖Function
@@ -59,13 +94,13 @@ create_bar_chart <- function(data, column_name) {
 create_hist_chart <- function(data, column_name, peak = 1) {
   # Create the plot
   plot <- ggplot(data, aes(x = !!sym(column_name), y = ..count..)) +
-    geom_histogram(stat="bin", bins = 150, fill = "orange", alpha = 0.5, aes(y=..count..)) +
+    geom_histogram(stat="bin", bins = 20, fill = "orange", alpha = 0.5, aes(y=..count..)) +
     geom_density(aes(y = ..density.. * mean(..count..) **peak), color = "orange", alpha = 1, linewidth = 1) +
     scale_fill_brewer(palette = "Pastel1") +
     theme_minimal() +
     theme(plot.title = element_text(hjust = 0.5),  # 置中
           panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5)) +  # 添加邊匡線
-    ggtitle("Customer.Age")+
+    ggtitle(column_name)+
     scale_x_continuous(n.breaks = 8) 
   
   # Return the plot
@@ -83,16 +118,25 @@ save_plots <- function(charts, width = 8, height = 6, path = getwd()) {
   }
 }
 
+filtered_data <- data[data$Transaction.Amount < 1500, ]
+hist_counts <- hist(filtered_data$Transaction.Amount, breaks = 30, plot = FALSE)
+max_count <- max(hist_counts$counts)
+max_index <- which(hist_counts$counts == max_count)
+max_range <- c(hist_counts$breaks[max_index], hist_counts$breaks[max_index + 1])
+max_range
+
+
 eda_plot <- function(data) {
   ## Transaction.Amount
-  transaction_chart <- ggplot(data, aes(x = Transaction.Amount)) +
-    geom_histogram(bins = 200, fill = "blue", color = "black") +
+  filtered_data <- data[data$Transaction.Amount < 1500, ]
+  transaction_chart <- ggplot(filtered_data, aes(x = Transaction.Amount)) +
+    geom_histogram(bins = 50, fill = "orange", color = "black") +
     theme_minimal()+
     scale_fill_brewer(palette = "Pastel1") +  #顏色樣式統一
     theme(plot.title = element_text(hjust = 0.5),  # 置中
           panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5)) +  # 添加邊匡線
     ggtitle("Transaction Amount") +
-    scale_x_continuous(n.breaks = 6) +
+    scale_x_continuous(breaks = c(seq(0, 400, by = 100), seq(500, max(filtered_data$Transaction.Amount), by = 200))) +  # Combine custom and default breaks
     scale_y_continuous(n.breaks = 8, labels = comma)
   
   ## Payment.Method
@@ -112,10 +156,10 @@ eda_plot <- function(data) {
   device_bar_chart <- create_bar_chart(data, "Device.Used")
   
   ## Account.Age.Days
-  account_hist_chart <- create_hist_chart(data, "Account.Age.Days", peak = 1.82)
+  account_hist_chart <- create_hist_chart(data, "Account.Age.Days", peak = 2)
   
   ## Customer.Age
-  customer_hist_chart <- create_hist_chart(data, "Customer.Age", peak = 1.4)
+  customer_hist_chart <- create_hist_chart(data, "Customer.Age", peak = 1.5)
   
   ## Transaction.Hour
   hour_count <- data %>%
@@ -152,7 +196,8 @@ eda_plot <- function(data) {
 }
 
 plots <- eda_plot(data)
-# print(plots$fraudulent_violin_chart)
+# print(plots$customer_hist_chart)
+print(plots$transaction_chart)
 
 # 保存圖像到本地端
 save_plots(plots, path = "./image")
