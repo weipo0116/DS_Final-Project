@@ -94,7 +94,7 @@ create_bar_chart <- function(data, column_name) {
 create_hist_chart <- function(data, column_name, peak = 1) {
   # Create the plot
   plot <- ggplot(data, aes(x = !!sym(column_name), y = ..count..)) +
-    geom_histogram(stat="bin", bins = 20, fill = "orange", alpha = 0.5, aes(y=..count..)) +
+    geom_histogram(stat="bin", bins = 20, fill = "orange", color = "black", alpha = 0.5, aes(y=..count..)) +
     geom_density(aes(y = ..density.. * mean(..count..) **peak), color = "orange", alpha = 1, linewidth = 1) +
     scale_fill_brewer(palette = "Pastel1") +
     theme_minimal() +
@@ -118,19 +118,11 @@ save_plots <- function(charts, width = 8, height = 6, path = getwd()) {
   }
 }
 
-filtered_data <- data[data$Transaction.Amount < 1500, ]
-hist_counts <- hist(filtered_data$Transaction.Amount, breaks = 30, plot = FALSE)
-max_count <- max(hist_counts$counts)
-max_index <- which(hist_counts$counts == max_count)
-max_range <- c(hist_counts$breaks[max_index], hist_counts$breaks[max_index + 1])
-max_range
-
-
 eda_plot <- function(data) {
   ## Transaction.Amount
   filtered_data <- data[data$Transaction.Amount < 1500, ]
   transaction_chart <- ggplot(filtered_data, aes(x = Transaction.Amount)) +
-    geom_histogram(bins = 50, fill = "orange", color = "black") +
+    geom_histogram(bins = 50, fill = "orange", color = "black", alpha = 0.5) +
     theme_minimal()+
     scale_fill_brewer(palette = "Pastel1") +  #顏色樣式統一
     theme(plot.title = element_text(hjust = 0.5),  # 置中
@@ -197,7 +189,7 @@ eda_plot <- function(data) {
 
 plots <- eda_plot(data)
 # print(plots$customer_hist_chart)
-print(plots$transaction_chart)
+# print(plots$transaction_chart)
 
 # 保存圖像到本地端
 save_plots(plots, path = "./image")
